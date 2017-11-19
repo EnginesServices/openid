@@ -15,8 +15,116 @@
         "level": "alpha",
         "patch": 0
       }
-    }
+    },
+    "software": {
+      "display": {
+        "title": "OpenID provider",
+        "label": "openid"
+      }
+    },
+    "timestamp": "2017-11-20T10:55:52+11:00"
   },
   "software": {
+    "base": {
+      "name": "openid",
+      "publisher_namespace": "EnginesSystem",
+      "type_path": "openid",
+      "parent_image": "engines/servicebase",
+      "run_as_user": "openid",
+      "deployment_type": "web",
+      "http_protocol": "https_only",
+      "memory": {
+        "required": 90,
+        "recommended": 90
+      },
+      "persistent": true
+    },
+    "scripts": {
+      "start": {
+        "language": "sh",
+        "content": "#!/bin/sh\r\n  \r\nPID_FILE=/var/run/engines/apache.pid\r\nexport PID_FILE\r\n. /home/engines/functions/trap.sh\r\n\r\nservice_first_run_check\r\n\r\n/usr/sbin/apache2ctl -DFOREGROUND &\t\r\n\r\necho $? > /var/run/engines/apache.pid\r\n\r\nstartup_complete\r\n\r\nwait\r\nexit_code=$?\r\n\r\nshutdown_complete\r\n"
+      },
+      "install": {
+        "language": "sh",
+        "content": "#!/bin/bash\r\nphpenmod ldap\r\npear install Net_LDAP2 "
+      }
+    },
+    "system_packages": [
+      {
+        "package": "apache2"
+      },
+      {
+        "package": "php-gettext"
+      },
+      {
+        "package": "php-mbstring"
+      },
+      {
+        "package": "libapache2-mod-php7.0"
+      },
+      {
+        "package": "php-mcrypt"
+      },
+      {
+        "package": "php-gd"
+      },
+      {
+        "package": "php-apcu"
+      },
+      {
+        "package": "php-ldap"
+      },
+      {
+        "package": "php-bcmath"
+      },
+      {
+        "package": "php-dev"
+      }
+    ],
+    "installed_packages": [
+      {
+        "name": "simpleid-1.0.2.tar.gz",
+        "destination": "/home/simpleid",
+        "extraction_command": "tar -xzpf ",
+        "path_to_extracted": "simpleid"
+      },
+      {
+        "name": "ldap-filesystem.store.php ",
+        "destination": "/home/simpleid/www/",
+        "path_to_extracted": "ldap-filesystem.store.php "
+      }
+    ],
+    "template_files": [
+      {
+        "path": "/home/simpleid/www/config.php",
+        "language": "php",
+        "content": "<?php\r\n/**\r\n * SimpleID configuration file.\r\n *\r\n * @package simpleid\r\n *\r\n */\r\n/*\r\n * $Id$\r\n *\r\n */\r\n\r\n\r\n/**\r\n * Base URL.\r\n *\r\n * This is the URL of the location you want to place your SimpleID\r\n * distribution.  It becomes the URL of the SimpleID server.\r\n *\r\n * It is not allowed to have a trailing slash; SimpleID will add it\r\n * for you.\r\n *\r\n * Examples:\r\n * <code>\r\n *   define('SIMPLEID_BASE_URL', 'http://www.example.com');\r\n *   define('SIMPLEID_BASE_URL', 'http://www.example.com:8888');\r\n *   define('SIMPLEID_BASE_URL', 'http://www.example.com/simpleid');\r\n *   define('SIMPLEID_BASE_URL', 'https://www.example.com:8888/simpleid');\r\n * </code>\r\n *\r\n */\r\ndefine('SIMPLEID_BASE_URL', 'http://www.example.com');\r\n\r\n/**\r\n * Allow clean URLs.\r\n *\r\n * URLs used in SimpleID are normally in the form\r\n * http://www.example.com/index.php?q=foo.  Enabling clean URLs will allow for\r\n * SimpleID URLs to be in the form http://www.example.com/foo\r\n *\r\n * In order to support clean URLs, you must be using Apache with mod_rewrite\r\n * enabled.  You will need to rename .htaccess.dist in the SimpleID web directory\r\n * to .htaccess\r\n *\r\n * @since 0.8\r\n *\r\n */\r\ndefine('SIMPLEID_CLEAN_URL', false);\r\n\r\n/**\r\n * Directory to store identity information.\r\n *\r\n * This directory must exist and be readable by the web server.\r\n *\r\n *\r\n * For maximum security, it is highly recommended to place this\r\n * directory outside your web browser's document root directory, so\r\n * that it is not visible to user agents.\r\n *\r\n */\r\ndefine('SIMPLEID_IDENTITIES_DIR', '/var/lib/openid/identities');\r\n\r\n/**\r\n * Directory to store cache data.\r\n *\r\n * This directory must exist and be readable and writable by the\r\n * web server.\r\n *\r\n * For maximum security, it is highly recommended to place this\r\n * directory outside your web browser's document root directory, so\r\n * that it is not visible to user agents.\r\n *\r\n */\r\ndefine('SIMPLEID_CACHE_DIR', '/var/lib/openid/cache');\r\n\r\n/**\r\n * Persistent data storage mechanism.\r\n *\r\n * SimpleID provides flexible methods to store and retrieve persistent data.\r\n * By default, SimpleID uses the file system to store this data, implemented\r\n * in filesystem.store.inc.  Users can implement other methods by creating\r\n * a file with extension .store.inc and specifying the file through this\r\n * setting.\r\n *\r\n * Generally you do not need to change this setting.\r\n *\r\n */\r\n/** Standard below\r\n *  define('SIMPLEID_STORE', 'filesystem');\r\n * */\r\n\r\ndefine('SIMPLEID_STORE', 'ldap-filesystem');\r\n/**\r\n * Directory to store persistent data.\r\n *\r\n * This directory must exist and be readable and writable by the\r\n * web server.\r\n *\r\n * For maximum security, it is highly recommended to place this\r\n * directory outside your web browser's document root directory, so\r\n * that it is not visible to user agents.\r\n *\r\n */\r\ndefine('SIMPLEID_STORE_DIR', '/var/lib/openid/store');\r\n\r\n/**\r\n * Allows use of unencrypted connections.\r\n *\r\n * Between versions 0.6 and 0.8 (inclusive), SimpleID uses either HTTPS or\r\n * a form of digest authentication for its login system.  This allows passwords\r\n * and other secure information not to be sent to the server as plaintext.\r\n *\r\n * From version 0.9, SimpleID mandates the use of HTTPS for all connections\r\n * (other than direct connections between SimpleID and an OpenID relying\r\n * party).  However, for debug purposes, it may be necessary to allow\r\n * unencrypted connections to SimpleID.\r\n *\r\n * It is strongly recommended that this is set to false.  Setting this to true\r\n * will allow passwords to be sent as plaintext.  You should not change this\r\n * value unless it is absolutely necessary.\r\n *\r\n * @since 0.9\r\n */\r\ndefine('SIMPLEID_ALLOW_PLAINTEXT', false);\r\n\r\n/**\r\n * Allows web browsers to save passwords.\r\n *\r\n * SimpleID prevents web browsers from saving user passwords entered in a user\r\n * logs into SimpleID.  Setting this value to true will allow browsers to\r\n * ask the user whether the password should be saved in the browser's password\r\n * store.\r\n *\r\n * The default is set to false for security reasons.  You should not change\r\n * this value unless you are certain regarding the security of your browser's\r\n * password store.\r\n *\r\n * @since 0.8\r\n */\r\ndefine('SIMPLEID_ALLOW_AUTOCOMPLETE', false);\r\n\r\n/**\r\n * Performs additional verification of relying party return URLs.\r\n *\r\n * When authenticating using OpenID version 2, SimpleID version 0.7 or later\r\n * can perform additional verification of the relying party's return URLs under\r\n * section 9.2.1 of the OpenID specification.\r\n *\r\n * The default is set to true for security reasons.  However, if your web server\r\n * is blocked by your web hosting provider's firewall from accessing outside\r\n * servers, then set this to false.\r\n *\r\n * @since 0.7\r\n *\r\n */\r\ndefine('SIMPLEID_VERIFY_RETURN_URL_USING_REALM', true);\r\n\r\n\r\n/**\r\n * The locale for the SimpleID user interface.\r\n *\r\n * @since 0.9\r\n */\r\ndefine('SIMPLEID_LOCALE', 'en');\r\n\r\n/**\r\n * Date and time format.\r\n *\r\n * The date and time format specified using the strftime() syntax.\r\n *\r\n * See http://www.php.net/strftime for details.\r\n *\r\n */\r\ndefine('SIMPLEID_DATE_TIME_FORMAT', '%Y-%m-%d %H:%M:%S %Z');\r\n\r\n/**\r\n * The number of seconds before associations expire.  This is an advanced\r\n * option, for which the default setting should work fine.\r\n *\r\n * Note that for ICAM compliance, this number must be less than 86400.\r\n */\r\ndefine('SIMPLEID_ASSOC_EXPIRES_IN', 3600);\r\n\r\n/**\r\n * SimpleID extensions.\r\n *\r\n * The SimpleID extensions you wish to load.  You should separate the\r\n * extensions you wish to load with a comma.\r\n *\r\n */\r\ndefine('SIMPLEID_EXTENSIONS', 'sreg,ui,core');\r\n\r\n/**\r\n * Log file.\r\n *\r\n * You can specify a file into which SimpleID will log various diagnostic\r\n * messages.\r\n *\r\n * The log file's directory must exist and must be writable by the web server.\r\n *\r\n * To disable logging, set this as an empty string.\r\n *\r\n * @since 0.7\r\n *\r\n */\r\ndefine('SIMPLEID_LOGFILE', '/var/log/openid.log');\r\n\r\n/**\r\n * The level of detail for log messages.\r\n *\r\n * You can determine which messages are captured in the log file by specifying\r\n * a number between 0 and 5. The higher the number, the more messages are\r\n * logged.\r\n *\r\n * WARNING: Setting the log level to 5 will result in security sensitive\r\n * information also being logged.\r\n *\r\n * This has effect only if logging is enabled.\r\n *\r\n * @since 0.7\r\n *\r\n */\r\ndefine('SIMPLEID_LOGLEVEL', 4);\r\n"
+      },
+      {
+        "path": "ldap-filesystem.store.config.php",
+        "language": "php",
+        "content": "<?php\r\n/**\r\n * The LDAP server name and TCP port.\r\n *\r\n * LDAP_HOST can also contain a full LDAP URL, which is necessary\r\n * when specifying that LDAPS should be used, e.g.\r\n * \r\n *   define('LDAP_HOST', 'ldaps://ldap.example.org:636');\r\n *\r\n */\r\ndefine('LDAP_HOST', 'ldap');\r\ndefine('LDAP_PORT', 389);\r\n\r\n/**\r\n * The LDAP base DN for the search\r\n */\r\ndefine('LDAP_BASE_DN', 'ou=People,dc=engines,dc=internal');"
+      },
+      {
+        "path": "/etc/apache2/ports.conf",
+        "language": "text",
+        "content": "# If you just change the port or add more ports here, you will likely also\r\n# have to change the VirtualHost statement in\r\n# /etc/apache2/sites-enabled/000-default.conf\r\n\r\nListen 8000\r\n\r\n<IfModule ssl_module>\r\n        Listen 4430 https\r\n</IfModule>\r\n\r\n<IfModule mod_gnutls.c>\r\n        Listen 4430 https\r\n</IfModule>\r\n\r\n# vim: syntax=apache ts=4 sw=4 sts=4 sr noet\r\n"
+      },
+      {
+        "path": "/etc/apache2/envvars",
+        "language": "sh",
+        "content": "# envvars - default environment variables for apache2ctl\r\n\r\n# this won't be correct after changing uid\r\nunset HOME\r\n\r\n# for supporting multiple apache2 instances\r\nif [ \"${APACHE_CONFDIR##/etc/apache2-}\" != \"${APACHE_CONFDIR}\" ] ; then\r\n        SUFFIX=\"-${APACHE_CONFDIR##/etc/apache2-}\"\r\nelse\r\n        SUFFIX=\r\nfi\r\n\r\n# Since there is no sane way to get the parsed apache2 config in scripts, some\r\n# settings are defined via environment variables and then used in apache2ctl,\r\n# /etc/init.d/apache2, /etc/logrotate.d/apache2, etc.\r\nexport APACHE_RUN_USER=openid\r\nexport APACHE_RUN_GROUP=www-data\r\n# temporary state file location. This might be changed to /run in Wheezy+1\r\nexport APACHE_PID_FILE=/var/run/engines/apache2$SUFFIX.pid\r\nexport APACHE_RUN_DIR=/var/run/engines\r\nexport APACHE_LOCK_DIR=/var/lock/apache2$SUFFIX\r\n# Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.\r\nexport APACHE_LOG_DIR=/var/log/apache2$SUFFIX\r\n\r\n## The locale used by some modules like mod_dav\r\nexport LANG=C\r\n## Uncomment the following line to use the system default locale instead:\r\n#. /etc/default/locale\r\n\r\nexport LANG\r\n\r\n## The command to get the status for 'apache2ctl status'.\r\n## Some packages providing 'www-browser' need '--dump' instead of '-dump'.\r\n#export APACHE_LYNX='www-browser -dump'\r\n\r\n## If you need a higher file descriptor limit, uncomment and adjust the\r\n## following line (default is 8192):\r\n#APACHE_ULIMIT_MAX_FILES='ulimit -n 65536'\r\n\r\n## If you would like to pass arguments to the web server, add them below\r\n## to the APACHE_ARGUMENTS environment.\r\n#export APACHE_ARGUMENTS=''\r\n\r\n## Enable the debug mode for maintainer scripts.\r\n## This will produce a verbose output on package installations of web server modules and web application\r\n## installations which interact with Apache\r\n#export APACHE2_MAINTSCRIPT_DEBUG=1\r\n"
+      },
+      {
+        "path": "/etc/apache2/apache.conf",
+        "language": "sh",
+        "content": "Mutex file:${APACHE_LOCK_DIR} default\r\n\r\n#\r\n#\r\n# PidFile: The file in which the server should record its process\r\n# identification number when it starts.\r\n# This needs to be set in /etc/apache2/envvars\r\n#\r\nPidFile ${APACHE_PID_FILE}\r\n\r\n#\r\n# Timeout: The number of seconds before receives and sends time out.\r\n#\r\nTimeout 300\r\n\r\n#\r\n# KeepAlive: Whether or not to allow persistent connections (more than\r\n# one request per connection). Set to \"Off\" to deactivate.\r\n#\r\nKeepAlive On\r\n\r\n#\r\n# MaxKeepAliveRequests: The maximum number of requests to allow\r\n# during a persistent connection. Set to 0 to allow an unlimited amount.\r\n# We recommend you leave this number high, for maximum performance.\r\n#\r\nMaxKeepAliveRequests 100\r\n\r\n#\r\n# KeepAliveTimeout: Number of seconds to wait for the next request from the\r\n# same client on the same connection.\r\n#\r\nKeepAliveTimeout 5\r\n# These need to be set in /etc/apache2/envvars\r\nUser ${APACHE_RUN_USER}\r\nGroup ${APACHE_RUN_GROUP}\r\n\r\n#\r\n# HostnameLookups: Log the names of clients or just their IP addresses\r\n# e.g., www.apache.org (on) or 204.62.129.132 (off).\r\n# The default is off because it'd be overall better for the net if people\r\n# had to knowingly turn this feature on, since enabling it means that\r\n# each client request will result in AT LEAST one lookup request to the\r\n# nameserver.\r\n#\r\nHostnameLookups Off\r\n\r\n# ErrorLog: The location of the error log file.\r\n# If you do not specify an ErrorLog directive within a <VirtualHost>\r\n# container, error messages relating to that virtual host will be\r\n# logged here.  If you *do* define an error logfile for a <VirtualHost>\r\n# container, that host's errors will be logged there and not here.\r\n#\r\nErrorLog ${APACHE_LOG_DIR}/error.log\r\n\r\n#\r\n# LogLevel: Control the severity of messages logged to the error_log.\r\n# Available values: trace8, ..., trace1, debug, info, notice, warn,\r\n# error, crit, alert, emerg.\r\n# It is also possible to configure the log level for particular modules, e.g.\r\n# \"LogLevel info ssl:warn\"\r\n#\r\nLogLevel warn\r\n\r\n# Include module configuration:\r\nIncludeOptional mods-enabled/*.load\r\nIncludeOptional mods-enabled/*.conf\r\n\r\n# Include list of ports to listen on\r\nInclude ports.conf\r\n\r\n\r\n# Sets the default security model of the Apache2 HTTPD server. It does\r\n# not allow access to the root filesystem outside of /usr/share and /var/www.\r\n# The former is used by web applications packaged in Debian,\r\n# the latter may be used for local directories served by the web server. If\r\n# your system is serving content from a sub-directory in /srv you must allow\r\n# access here, or in any related virtual host.\r\n<Directory />\r\n        Options FollowSymLinks\r\n        AllowOverride None\r\n        Require all denied\r\n</Directory>\r\n<Directory /usr/share>\r\n        AllowOverride None\r\n        Require all granted\r\n</Directory>\r\n\r\n<Directory /home/simpleid/www>\r\n        Options Indexes FollowSymLinks\r\n        AllowOverride None\r\n        Require all granted\r\n</Directory>\r\n\r\n#<Directory /srv/>\r\n#       Options Indexes FollowSymLinks\r\n#       AllowOverride None\r\n#       Require all granted\r\n#</Directory>\r\n\r\n\r\n\r\n\r\n# AccessFileName: The name of the file to look for in each directory\r\n# for additional configuration directives.  See also the AllowOverride\r\n# directive.\r\n#\r\nAccessFileName .htaccess\r\n\r\n#\r\n# The following lines prevent .htaccess and .htpasswd files from being\r\n# viewed by Web clients.\r\n#\r\n<FilesMatch \"^\\.ht\">\r\n        Require all denied\r\n</FilesMatch>\r\n\r\n\r\n#\r\n# The following directives define some format nicknames for use with\r\n# a CustomLog directive.\r\n#\r\n# These deviate from the Common Log Format definitions in that they use %O\r\n# (the actual bytes sent including headers) instead of %b (the size of the\r\n# requested file), because the latter makes it impossible to detect partial\r\n# requests.\r\n#\r\n# Note that the use of %{X-Forwarded-For}i instead of %h is not recommended.\r\n# Use mod_remoteip instead.\r\n#\r\nLogFormat \"%v:%p %h %l %u %t \\\"%r\\\" %>s %O \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\" vhost_combined\r\nLogFormat \"%h %l %u %t \\\"%r\\\" %>s %O \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\" combined\r\nLogFormat \"%h %l %u %t \\\"%r\\\" %>s %O\" common\r\nLogFormat \"%{Referer}i -> %U\" referer\r\nLogFormat \"%{User-agent}i\" agent\r\n# Include of directories ignores editors' and dpkg's backup files,\r\n# see README.Debian for details.\r\n\r\n# Include generic snippets of statements\r\nIncludeOptional conf-enabled/*.conf\r\n\r\n# Include the virtual host configurations:\r\nIncludeOptional sites-enabled/*.conf\r\n\r\n# vim: syntax=apache ts=4 sw=4 sts=4 sr noet\r\n                                                                              \r\n"
+      },
+      {
+        "path": "/etc/apache2/sites-enabled/000-default.conf",
+        "language": "text",
+        "content": "<VirtualHost *:8000>\r\n        ServerAdmin webmaster@localhost\r\n\r\n#SERVER_NAME\r\n DocumentRoot /home/simpleid/www\r\n        <Directory />\r\n                Options FollowSymLinks\r\n                AllowOverride None\r\n        </Directory>\r\n        <Directory /home/simpleid/www>\r\n       \t\t\tDirectoryIndex  index.html index.htm index.php     \r\n                Options  FollowSymLinks \r\n                AllowOverride ALL\r\n<IfVersion < 2.4>\r\n    Allow from all\r\n</IfVersion>\r\n<IfVersion >= 2.4>\r\n    Require all granted\r\n</IfVersion>\r\n           \r\n                Order allow,deny\r\n                allow from all\r\n        </Directory>\r\n\r\n        ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/\r\n        <Directory \"/usr/lib/cgi-bin\">\r\n                AllowOverride None\r\n                Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch\r\n                Order allow,deny\r\n                Allow from all\r\n        </Directory>\r\n\r\n        ErrorLog ${APACHE_LOG_DIR}/error.log\r\n\r\n        # Possible values include: debug, info, notice, warn, error, crit,\r\n        # alert, emerg.\r\n        LogLevel warn\r\n\r\n        CustomLog ${APACHE_LOG_DIR}/access.log combined\r\n</VirtualHost>\r\n"
+      }
+    ]
   }
 }
